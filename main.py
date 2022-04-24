@@ -38,7 +38,35 @@ def get_links(xml_doc):
     return l1 + l2 + l3 + l4
 
 
-def get_president_data(infobox) -> [string, string]:
+def get_place_of_birth(xml_doc) -> string:
+
+    infobox = xml_doc.xpath("//table[contains(@class, 'infobox')]")[0]
+    pob = infobox.xpath("//table//th[text()='Born']/../td//a[position()=last()][not(ancestor::sup)]/text()")
+
+    if len(pob):
+        pob = pob[0]
+        print("Place of birth: " + pob)
+        return pob
+    else:
+        print("Fail in place of birth")
+        return None
+
+
+def get_date_of_birth(xml_doc) -> string:
+    infobox = xml_doc.xpath("//table[contains(@class, 'infobox')]")[0]
+
+    #fix this to be actual date of birth
+    dob = infobox.xpath("//table//th[text()='Born']/../td//a[position()=last()][not(ancestor::sup)]/text()")
+
+    if len(dob):
+        dob = dob[0]
+        print("Date of birth: " + dob)
+        return dob
+    else:
+        print("Fail in date of birth")
+        return None
+
+def get_president_data(infobox) -> [string, string, string]:
     """
     gets president data
     :param a: xml
@@ -53,22 +81,16 @@ def get_president_data(infobox) -> [string, string]:
         res2 = requests.get(PREFIX + president.attrib["href"])
         doc2 = lxml.html.fromstring(res2.content)
 
-        infobox2 = doc2.xpath("//table[contains(@class, 'infobox')]")[0]
-        pob = infobox2.xpath("//table//th[text()='Born']/../td//a[position()=last()]/text()")
+        president_pob = get_place_of_birth(doc2)
+        president_dob = get_date_of_birth(doc2)
 
-        if len(pob):
-            pob = pob[0]
-            print("President was born in " + pob)
-            return president.text, pob
-        else:
-            print("Fail in president place of birth")
-            return president.text, None
+        return president.text, president_pob, president_dob
     else:
         print("Fail in President")
-        return None, None
+        return None, None, None
 
 
-def get_prime_minister_data(infobox) -> [string, string]:
+def get_prime_minister_data(infobox) -> [string, string, string]:
     """
     gets prime minister data
     :param a: xml
@@ -82,19 +104,13 @@ def get_prime_minister_data(infobox) -> [string, string]:
         res2 = requests.get(PREFIX + prime_minister.attrib["href"])
         doc2 = lxml.html.fromstring(res2.content)
 
-        infobox2 = doc2.xpath("//table[contains(@class, 'infobox')]")[0]
-        pob = infobox2.xpath("//table//th[text()='Born']/../td//a[position()=last()]/text()")
+        pm_pob = get_place_of_birth(doc2)
+        pm_dob = get_date_of_birth(doc2)
 
-        if len(pob):
-            pob = pob[0]
-            print("Prime Minister was born in " + pob)
-            return prime_minister.text, pob
-        else:
-            print("Fail in Prime Minister place of birth")
-            return prime_minister.text, None
+        return prime_minister.text, pm_pob, pm_dob
     else:
         print("Fail in Prime Minister")
-        return None, None
+        return None, None, None
 
 
 def get_population_data(infobox) -> string:
@@ -190,7 +206,7 @@ def get_data(url):
     links = get_links(doc)
 
     start = 0
-    end = 50
+    end = 20
     # g.parse('graph.nt', 'nt')
     for i in range(start, end):
         country = countries[i]
@@ -201,13 +217,15 @@ def get_data(url):
 
         infobox = doc.xpath("//table[contains(@class, 'infobox')]")[0]
 
-        president_name, president_pob = get_president_data(infobox)
+        president_name, president_pob, president_dob = get_president_data(infobox)
         insert_into_ontology(president_name, Relations.PRESIDENT_OF, country)
-        insert_into_ontology(president_pob, Relations.POB, country)
+        insert_into_ontology(president_pob, Relations.POB, president_name)
+        insert_into_ontology(president_dob, Relations.DOB, president_name)
 
-        pm_name, pm_pob = get_prime_minister_data(infobox)
+        pm_name, pm_pob, pm_dob = get_prime_minister_data(infobox)
         insert_into_ontology(pm_name, Relations.PM_OF, country)
-        insert_into_ontology(pm_pob, Relations.POB, country)
+        insert_into_ontology(pm_pob, Relations.POB, pm_name)
+        insert_into_ontology(pm_dob, Relations.DOB, pm_name)
 
         country_population = get_population_data(infobox)
         insert_into_ontology(country_population, Relations.POPULATION, country)
