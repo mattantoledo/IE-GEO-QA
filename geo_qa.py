@@ -9,11 +9,24 @@ def get_countries(url):
     res = requests.get(url)
     doc = lxml.html.fromstring(res.content)
 
-    countries = doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1]/span/a/text()")
-    links = doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1]/span/a/@href")
+    c1 = doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][not(contains(text(), '('))]/span/a[1]/text()")
+    c2 = doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][not(contains(text(), '('))]/a[1]/text()")
+    c3 = doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][contains(text(), '(')]/span/a/text()")
+    c4 = doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1]/i/a[1]/text()")
 
-    start = 1
-    end = 20
+    countries = c1 + c2 + c3 + c4
+
+    l1 = doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][not(contains(text(), '('))]/span/a[1]/@href")
+    l2 = doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][not(contains(text(), '('))]/a[1]/@href")
+    l3 = doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][contains(text(), '(')]/span/a/@href")
+    l4 = doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1]/i/a[1]/@href")
+
+    links = l1 + l2 + l3 + l4
+
+    start = 220
+    end = 233
+
+    kk =0
 
     for i in range(start, end):
 
@@ -22,10 +35,10 @@ def get_countries(url):
         res = requests.get(PREFIX + links[i])
         doc = lxml.html.fromstring(res.content)
 
-        a = doc.xpath("//table[contains(@class, 'infobox')]")
+        infobox = doc.xpath("//table[contains(@class, 'infobox')]")[0]
 
         try:
-            m = a[0].xpath("//table//a[text()='President']")
+            m = infobox.xpath("//table//a[text()='President']")
             president = m[0].xpath("./../../../td/a")
             print("President: " + president[0].text)
 
@@ -41,7 +54,7 @@ def get_countries(url):
             print("Fail in President or president place of birth")
 
         try:
-            b = a[0].xpath("//table//a[text()='Prime Minister']")
+            b = infobox.xpath("//table//a[text()='Prime Minister']")
             prime_minister = b[0].xpath("./../../../td/a")
             print("Prime Minister: " + prime_minister[0].text)
 
@@ -56,24 +69,28 @@ def get_countries(url):
             print("Fail in Prime Minister or prime minister place of birth")
 
         try:
-            c = a[0].xpath("//table//a[text()='Population']")
+            c = infobox.xpath("//table//a[text()='Population']")
 
             if c:
                 population = c[0].xpath("./../../following-sibling::tr[1]/td/text()")[0]
             else:
-                c = a[0].xpath("//table//th[text()='Population']")
+                c = infobox[0].xpath("//table//th[text()='Population']")
                 population = c[0].xpath("./../following-sibling::tr[1]/td/text()")[0]
+
+            if len(population) < 3:  # russia special case
+                population = c[0].xpath("./../../following-sibling::tr[1]/td/div/ul/li[1]/text()")[0]
+
             print("Population: " + population.strip())
         except Exception:
             print("Fail in Population")
 
         try:
-            d = a[0].xpath("//table//a[text()='Area ' or text()='Area']")
+            d = infobox.xpath("//table//a[text()='Area ' or text()='Area']")
 
             if d:
                 area = d[0].xpath("./../../following-sibling::tr[1]/td/text()")[0]
             else:
-                d = a[0].xpath("//table//th[text()='Area ' or text()='Area']")
+                d = infobox[0].xpath("//table//th[text()='Area ' or text()='Area']")
                 area = d[0].xpath("./../following-sibling::tr[1]/td/text()")[0]
 
             print("Area: " + area)
@@ -81,11 +98,11 @@ def get_countries(url):
             print("Fail in Area")
 
         try:
-            e = a[0].xpath("//table//a[text()='Government']")
+            e = infobox.xpath("//table//a[text()='Government']")
             if e:
                 government_form = e[0].xpath("./../../td//a/@title")
             else:
-                e = a[0].xpath("//table//th[text()='Government']")
+                e = infobox[0].xpath("//table//th[text()='Government']")
                 government_form = e[0].xpath("./../td//a/@title")
 
             government_form.sort()
@@ -97,15 +114,21 @@ def get_countries(url):
             print("Fail in Government Form")
 
         try:
-            f = a[0].xpath("//table//th[text() = 'Capital' and @class = 'infobox-label']")
-            capital = f[0].xpath("./../td/a/text()")[0]
+            capital = infobox.xpath(".//th[contains(text(), 'Capital') and @class = 'infobox-label']/../td/a/text()")
+            if not len(capital):
+                capital = infobox.xpath(
+                    ".//th[contains(text(), 'Capital') and @class = 'infobox-label']/../td/text()")
+            capital = capital[0]
             print("Capital: " + capital)
         except Exception:
+            print(countries[i])
+            kk += 1
             print("Fail in Capital")
 
         print("***************")
 
     print("Done")
+    print(kk)
 
 
 def main():

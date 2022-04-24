@@ -22,123 +22,143 @@ class Relations(Enum):
 
 
 def get_countries(xml_doc):
-    return xml_doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1]/span/a/text()")
+
+    c1 = xml_doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][not(contains(text(), '('))]/span/a[1]/text()")
+    c2 = xml_doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][not(contains(text(), '('))]/a[1]/text()")
+    c3 = xml_doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][contains(text(), '(')]/span/a/text()")
+    c4 = xml_doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1]/i/a[1]/text()")
+    return c1 + c2 + c3 + c4
 
 
 def get_links(xml_doc):
-    return xml_doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1]/span/a/@href")
+    l1 = xml_doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][not(contains(text(), '('))]/span/a[1]/@href")
+    l2 = xml_doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][not(contains(text(), '('))]/a[1]/@href")
+    l3 = xml_doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][contains(text(), '(')]/span/a/@href")
+    l4 = xml_doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1]/i/a[1]/@href")
+    return l1 + l2 + l3 + l4
 
 
-def get_president_data(a) -> [string, string]:
+def get_president_data(infobox) -> [string, string]:
     """
     gets president data
     :param a: xml
     :return: president name, place of birth
     """
-    try:
-        m = a[0].xpath("//table//a[text()='President']")
-        president = m[0].xpath("./../../../td/a")
-        print("President: " + president[0].text)
 
-        res2 = requests.get(PREFIX + president[0].attrib["href"])
+    president = infobox.xpath(".//a[text()='President']/../../../td/a")
+    if len(president):
+        president = president[0]
+        print("President: " + president.text)
+
+        res2 = requests.get(PREFIX + president.attrib["href"])
         doc2 = lxml.html.fromstring(res2.content)
 
-        a2 = doc2.xpath("//table[contains(@class, 'infobox')]")
-        m2 = a2[0].xpath("//table//th[text()='Born']")
-        pob = m2[0].xpath("./../td//a[position()=last()]/text()")
-        print("President was born in " + pob[0])
-        return president[0].text, pob[0]
-    except Exception:
-        print("Fail in President or president place of birth")
+        infobox2 = doc2.xpath("//table[contains(@class, 'infobox')]")[0]
+        pob = infobox2.xpath("//table//th[text()='Born']/../td//a[position()=last()]/text()")
+
+        if len(pob):
+            pob = pob[0]
+            print("President was born in " + pob)
+            return president.text, pob
+        else:
+            print("Fail in president place of birth")
+            return president.text, None
+    else:
+        print("Fail in President")
         return None, None
 
 
-def get_prime_minister_data(a) -> [string, string]:
+def get_prime_minister_data(infobox) -> [string, string]:
     """
     gets prime minister data
     :param a: xml
     :return: prime minister name, place of birth
     """
-    try:
-        b = a[0].xpath("//table//a[text()='Prime Minister']")
-        prime_minister = b[0].xpath("./../../../td/a")
-        print("Prime Minister: " + prime_minister[0].text)
+    prime_minister = infobox.xpath(".//a[text()='Prime Minister']/../../../td/a")
+    if len(prime_minister):
+        prime_minister = prime_minister[0]
+        print("Prime Minister: " + prime_minister.text)
 
-        res2 = requests.get(PREFIX + prime_minister[0].attrib["href"])
+        res2 = requests.get(PREFIX + prime_minister.attrib["href"])
         doc2 = lxml.html.fromstring(res2.content)
 
-        a2 = doc2.xpath("//table[contains(@class, 'infobox')]")
-        m2 = a2[0].xpath("//table//th[text()='Born']")
-        pob = m2[0].xpath("./../td//a[position()=last()]/text()")
-        print("Prime Minister was born in " + pob[0])
-        return prime_minister[0].text, pob[0]
+        infobox2 = doc2.xpath("//table[contains(@class, 'infobox')]")[0]
+        pob = infobox2.xpath("//table//th[text()='Born']/../td//a[position()=last()]/text()")
 
-    except Exception:
-        print("Fail in Prime Minister or prime minister place of birth")
+        if len(pob):
+            pob = pob[0]
+            print("Prime Minister was born in " + pob)
+            return prime_minister.text, pob
+        else:
+            print("Fail in Prime Minister place of birth")
+            return prime_minister.text, None
+    else:
+        print("Fail in Prime Minister")
         return None, None
 
 
-def get_population_data(a) -> string:
-    try:
-        c = a[0].xpath("//table//a[text()='Population']")
+def get_population_data(infobox) -> string:
 
-        if c:
-            population = c[0].xpath("./../../following-sibling::tr[1]/td/text()")[0]
-        else:
-            c = a[0].xpath("//table//th[text()='Population']")
-            population = c[0].xpath("./../following-sibling::tr[1]/td/text()")[0]
-        print("Population: " + population.strip())
-        return population.strip()
-    except Exception:
+    population = infobox.xpath(".//a[text()='Population']/../../following-sibling::tr[1]/td/text()")
+    if not len(population):
+        population = infobox.xpath(".//th[text()='Population']/../following-sibling::tr[1]/td/text()")
+
+    if len(population):
+        population = population[0].strip()
+        if len(population) < 3:  # russia special case
+            population = infobox.xpath(".//a[text()='Population']/../../following-sibling::tr[1]/td/div/ul/li[1]/text()")[0]
+        print("Population: " + population)
+        return population
+    else:
         print("Fail in Population")
         return None
 
 
-def get_geographic_data(a) -> string:
-    try:
-        d = a[0].xpath("//table//a[text()='Area ' or text()='Area']")
+def get_geographic_data(infobox) -> string:
 
-        if d:
-            area = d[0].xpath("./../../following-sibling::tr[1]/td/text()")[0]
-        else:
-            d = a[0].xpath("//table//th[text()='Area ' or text()='Area']")
-            area = d[0].xpath("./../following-sibling::tr[1]/td/text()")[0]
+    area = infobox.xpath(".//a[contains(text(), 'Area')]/../../following-sibling::tr[1]/td/text()")
+    if not len(area):
+        area = infobox.xpath(".//th[contains(text(), 'Area')]/../following-sibling::tr[1]/td/text()")
 
+    if len(area):
+        area = area[0].split()[0] + " km squared"
         print("Area: " + area)
         return area
-
-    except Exception:
+    else:
         print("Fail in Area")
         return None
 
 
-def get_political_data(a) -> string:
-    try:
-        e = a[0].xpath("//table//a[text()='Government']")
-        if e:
-            government_form = e[0].xpath("./../../td//a/@title")
-        else:
-            e = a[0].xpath("//table//th[text()='Government']")
-            government_form = e[0].xpath("./../td//a/@title")
+def get_political_data(infobox) -> string:
 
-        government_form.sort()
-        s = ""
-        for g in government_form:
-            s = s + g + ", "
-        print("Government form: " + s[:-2])
-        return s[:-2]
-    except Exception:
+    gov = infobox.xpath(".//a[contains(text(), 'Government')]/../../td//a/@title")
+    if not len(gov):
+        gov = infobox.xpath(".//th[contains(text(), 'Government')]/../td//a/@title")
+
+    if len(gov):
+        gov.sort()
+        gov_str = ""
+        for g in gov:
+            gov_str = gov_str + g + ", "
+        print("Government form: " + gov_str[:-2])
+        return gov_str[:-2]
+    else:
         print("Fail in Government Form")
         return None
 
 
-def get_capital_city_data(a) -> string:
-    try:
-        f = a[0].xpath("//table//th[text() = 'Capital' and @class = 'infobox-label']")
-        capital = f[0].xpath("./../td/a/text()")[0]
+def get_capital_city_data(infobox) -> string:
+
+    capital = infobox.xpath(".//th[contains(text(), 'Capital') and @class = 'infobox-label']/../td/a/text()")
+
+    if not len(capital):
+        capital = infobox.xpath(".//th[contains(text(), 'Capital') and @class = 'infobox-label']/../td/text()")
+
+    if len(capital):
+        capital = capital[0]
         print("Capital: " + capital)
         return capital
-    except Exception:
+    else:
         print("Fail in Capital")
         return None
 
@@ -169,8 +189,8 @@ def get_data(url):
     countries = get_countries(doc)
     links = get_links(doc)
 
-    start = 1
-    end = 20
+    start = 0
+    end = 50
     # g.parse('graph.nt', 'nt')
     for i in range(start, end):
         country = countries[i]
@@ -179,30 +199,30 @@ def get_data(url):
         res = requests.get(PREFIX + links[i])
         doc = lxml.html.fromstring(res.content)
 
-        a = doc.xpath("//table[contains(@class, 'infobox')]")
+        infobox = doc.xpath("//table[contains(@class, 'infobox')]")[0]
 
-        president_name, president_pob = get_president_data(a)
+        president_name, president_pob = get_president_data(infobox)
         insert_into_ontology(president_name, Relations.PRESIDENT_OF, country)
         insert_into_ontology(president_pob, Relations.POB, country)
 
-        pm_name, pm_pob = get_prime_minister_data(a)
+        pm_name, pm_pob = get_prime_minister_data(infobox)
         insert_into_ontology(pm_name, Relations.PM_OF, country)
         insert_into_ontology(pm_pob, Relations.POB, country)
 
-        country_population = get_population_data(a)
+        country_population = get_population_data(infobox)
         insert_into_ontology(country_population, Relations.POPULATION, country)
 
-        country_area = get_geographic_data(a)
+        country_area = get_geographic_data(infobox)
         insert_into_ontology(country_area, Relations.AREA, country)
 
-        political_data = get_political_data(a)
+        political_data = get_political_data(infobox)
         insert_into_ontology(political_data, Relations.POLITICAL_STATUS, country)
 
-        capital_city = get_capital_city_data(a)
+        capital_city = get_capital_city_data(infobox)
         insert_into_ontology(capital_city, Relations.CAPITAL_OF, country)
 
         print("***************")
-    G.serialize('graph.nt', 'nt')
+    #G.serialize('graph.nt', 'nt')
     print("Done")
 
 
