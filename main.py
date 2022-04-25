@@ -117,16 +117,20 @@ def get_prime_minister_data(infobox) -> [string, string, string]:
 
 def get_population_data(infobox) -> string:
 
-    population = infobox.xpath(".//a[text()='Population']/../../following-sibling::tr[1]/td/text()")
-    if not len(population):
-        population = infobox.xpath(".//th[text()='Population']/../following-sibling::tr[1]/td/text()")
+    population_row = infobox.xpath(".//a[text()='Population']/../../following-sibling::tr")
 
-    if len(population):
-        population = population[0].strip()
-        if len(population) < 3:  # russia special case
-            population = infobox.xpath(".//a[text()='Population']/../../following-sibling::tr[1]/td/div/ul/li[1]/text()")[0]
-        print("Population: " + population)
-        return population
+    if not len(population_row):
+        population_row = infobox.xpath(".//th[text()='Population']/../following-sibling::tr")
+
+    if len(population_row):
+        population_row = population_row[0]
+        pop_val = population_row.xpath(".//td//text()")[0]
+        if len(pop_val) < 3: #special case for russia case
+            pop_val = population_row.xpath(".//td//li/text()")[0]
+
+        pop_val = pop_val.split()[0]
+        print("Population: " + pop_val)
+        return pop_val
     else:
         print("Fail in Population")
         return None
@@ -208,11 +212,11 @@ def get_data(url):
     links = get_links(doc)
 
     start = 0
-    end = 10
+    end = 30
     # g.parse('graph.nt', 'nt')
     for i in range(start, end):
         country = countries[i]
-        print("Name: " + country)
+        print(str(i) + " Name: " + country)
 
         res = requests.get(PREFIX + links[i])
         doc = lxml.html.fromstring(res.content)
