@@ -55,8 +55,7 @@ def get_place_of_birth(xml_doc) -> string:
 def get_date_of_birth(xml_doc) -> string:
     infobox = xml_doc.xpath("//table[contains(@class, 'infobox')]")[0]
 
-    #fix this to be actual date of birth
-    dob = infobox.xpath("//table//th[text()='Born']/../td//a[position()=last()][not(ancestor::sup)]/text()")
+    dob = infobox.xpath("//table//th[text()='Born']/../td/text()")
 
     if len(dob):
         dob = dob[0]
@@ -205,7 +204,7 @@ def get_data(url):
     countries = get_countries(doc)
     links = get_links(doc)
 
-    start = 0
+    start = 11
     end = 20
     # g.parse('graph.nt', 'nt')
     for i in range(start, end):
