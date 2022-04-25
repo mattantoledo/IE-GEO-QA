@@ -40,30 +40,33 @@ def get_links(xml_doc):
 
 def get_place_of_birth(xml_doc) -> string:
 
-    infobox = xml_doc.xpath("//table[contains(@class, 'infobox')]")[0]
-    pob = infobox.xpath("//table//th[text()='Born']/../td//a[position()=last()][not(ancestor::sup)]/text()")
+    infobox = xml_doc.xpath("//table[contains(@class, 'infobox')]")
+    if len(infobox):
+        infobox = infobox[0]
+        pob = infobox.xpath("//table//th[text()='Born']/../td//a[position()=last()][not(ancestor::sup)]/text()")
+        if len(pob):
+            pob = pob[0]
+            print("Place of birth: " + pob)
+            return pob
 
-    if len(pob):
-        pob = pob[0]
-        print("Place of birth: " + pob)
-        return pob
-    else:
-        print("Fail in place of birth")
-        return None
+    print("Fail in place of birth")
+    return None
 
 
 def get_date_of_birth(xml_doc) -> string:
-    infobox = xml_doc.xpath("//table[contains(@class, 'infobox')]")[0]
 
-    dob = infobox.xpath("//table//th[text()='Born']/../td/text()")
+    infobox = xml_doc.xpath("//table[contains(@class, 'infobox')]")
+    if len(infobox):
+        infobox = infobox[0]
+        dob = infobox.xpath("//table//th[text()='Born']/../td//span[@class='bday']/text()")
+        if len(dob):
+            dob = dob[0]
+            print("Date of birth: " + dob)
+            return dob
 
-    if len(dob):
-        dob = dob[0]
-        print("Date of birth: " + dob)
-        return dob
-    else:
-        print("Fail in date of birth")
-        return None
+    print("Fail in date of birth")
+    return None
+
 
 def get_president_data(infobox) -> [string, string, string]:
     """
@@ -204,8 +207,8 @@ def get_data(url):
     countries = get_countries(doc)
     links = get_links(doc)
 
-    start = 11
-    end = 20
+    start = 0
+    end = 10
     # g.parse('graph.nt', 'nt')
     for i in range(start, end):
         country = countries[i]
