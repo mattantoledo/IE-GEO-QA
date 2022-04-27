@@ -199,7 +199,7 @@ def insert_into_ontology(e1, relation_property, e2):
     if e2 is None:
         e2 = "None"
     e1 = add_ontology_prefix(insert_underscores(e1))
-    relation_property = add_ontology_prefix(relation_property)
+    relation_property = add_ontology_prefix(relation_property.value)
     e2 = add_ontology_prefix(insert_underscores(e2))
     G.add((rdflib.URIRef(e1), rdflib.URIRef(relation_property), rdflib.URIRef(e2)))
 
@@ -225,13 +225,13 @@ def get_data(url):
 
         president_name, president_pob, president_dob = get_president_data(infobox)
         insert_into_ontology(president_name, Relations.PRESIDENT_OF, country)
-        insert_into_ontology(president_pob, Relations.POB, president_name)
-        insert_into_ontology(president_dob, Relations.DOB, president_name)
+        insert_into_ontology(president_name, Relations.POB, president_pob)
+        insert_into_ontology(president_name, Relations.DOB, president_dob)
 
         pm_name, pm_pob, pm_dob = get_prime_minister_data(infobox)
         insert_into_ontology(pm_name, Relations.PM_OF, country)
-        insert_into_ontology(pm_pob, Relations.POB, pm_name)
-        insert_into_ontology(pm_dob, Relations.DOB, pm_name)
+        insert_into_ontology(pm_name, Relations.POB, pm_pob)
+        insert_into_ontology(pm_name, Relations.DOB, pm_dob)
 
         country_population = get_population_data(infobox)
         insert_into_ontology(country_population, Relations.POPULATION, country)
@@ -246,7 +246,7 @@ def get_data(url):
         insert_into_ontology(capital_city, Relations.CAPITAL_OF, country)
 
         print("***************")
-    #G.serialize('graph.nt', 'nt')
+    G.serialize('graph.nt', 'nt')
     print("Done")
 
 

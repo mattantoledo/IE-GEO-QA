@@ -2,7 +2,9 @@ from enum import Enum
 
 from main import Relations
 
-#TODO: what happens if a query looks like this - who was the born at vietnam?
+
+# TODO: Is the Ok?
+# TODO: what happens if a query looks like this - who was the born at vietnam?
 class TextStructure(Enum):
     ARE_ALSO = " are also "  # Question 12
 
@@ -76,10 +78,10 @@ def parse_q13_template(nl_query: str) -> (str, Relations, str):  # TODO: Is this
     return "countries", Relations.CAPITAL_OF, substring
 
 
-def parse_q14_template(nl_query: str) -> (str, Relations, str):  # TODO: is this ok?
+def parse_q14_template(nl_query: str) -> (str, Relations, str):  # TODO: is this ok? or do we need PMs as well
     substring_idx = len("How many presidents were born in ")
     e2 = nl_query[substring_idx:]
-    return "presidents", Relations.POB, e2
+    return Relations.PRESIDENT_OF, Relations.POB, e2
 
 
 def main():
