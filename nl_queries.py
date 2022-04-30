@@ -197,7 +197,7 @@ def test():
     g = rdflib.Graph()
     g.parse('graph.nt', 'nt')
 
-    country = "Iraq"
+    country = "Argentina"
     person = "Joe Biden"
 
     sparql_query = parse_nl_query_to_structured_query(f"Who is the president of {country}?")[-1]

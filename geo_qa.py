@@ -1,141 +1,88 @@
-import requests
+import sys
+
 import lxml.html
 
+from nl_queries import *
+
 PREFIX = "https://en.wikipedia.org"
+ONTOLOGY_PREFIX = "http://example.org/"
+COUNTRIES_PATH = "/wiki/List_of_countries_by_population_(United_Nations)"
+
+G = rdflib.Graph()
 
 
-def get_countries(url):
+def main(argv):
 
+    if len(argv) < 2:
+        print("Not enough arguments")
+        return
+
+    if argv[1] == 'create':
+        build_ontology(PREFIX + COUNTRIES_PATH)
+        G.serialize("ontology.nt", format='nt')
+        print('Finished building')
+        return
+
+    elif argv[1] == 'question':
+        sparql_query = parse_nl_query_to_structured_query(argv[2])[-1]
+        print_result(G, sparql_query)
+
+    else:
+        print("Wrong arguments")
+        return
+
+
+def insert_into_ontology(e1, relation_property, e2):
+    if e1 is None:
+        e1 = "None"
+    if e2 is None:
+        e2 = "None"
+    e1 = add_ontology_prefix(insert_underscores(e1))
+    relation_property = add_ontology_prefix(relation_property.value)
+    e2 = add_ontology_prefix(insert_underscores(e2))
+    G.add((rdflib.URIRef(e1), rdflib.URIRef(relation_property), rdflib.URIRef(e2)))
+
+
+def build_ontology(url):
     res = requests.get(url)
     doc = lxml.html.fromstring(res.content)
 
-    c1 = doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][not(contains(text(), '('))]/span/a[1]/text()")
-    c2 = doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][not(contains(text(), '('))]/a[1]/text()")
-    c3 = doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][contains(text(), '(')]/span/a/text()")
-    c4 = doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1]/i/a[1]/text()")
+    countries = get_countries(doc)
+    links = get_links(doc)
 
-    countries = c1 + c2 + c3 + c4
-
-    l1 = doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][not(contains(text(), '('))]/span/a[1]/@href")
-    l2 = doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][not(contains(text(), '('))]/a[1]/@href")
-    l3 = doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][contains(text(), '(')]/span/a/@href")
-    l4 = doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1]/i/a[1]/@href")
-
-    links = l1 + l2 + l3 + l4
-
-    start = 220
-    end = 233
-
-    kk =0
+    start = 0
+    end = len(countries)
 
     for i in range(start, end):
-
-        print("Name: " + countries[i])
+        country = countries[i]
 
         res = requests.get(PREFIX + links[i])
         doc = lxml.html.fromstring(res.content)
 
         infobox = doc.xpath("//table[contains(@class, 'infobox')]")[0]
 
-        try:
-            m = infobox.xpath("//table//a[text()='President']")
-            president = m[0].xpath("./../../../td/a")
-            print("President: " + president[0].text)
+        president_name, president_pob, president_dob = get_president_data(infobox)
+        insert_into_ontology(president_name, Relations.PRESIDENT_OF, country)
+        insert_into_ontology(president_name, Relations.POB, president_pob)
+        insert_into_ontology(president_name, Relations.DOB, president_dob)
 
-            res2 = requests.get(PREFIX + president[0].attrib["href"])
-            doc2 = lxml.html.fromstring(res2.content)
+        pm_name, pm_pob, pm_dob = get_prime_minister_data(infobox)
+        insert_into_ontology(pm_name, Relations.PM_OF, country)
+        insert_into_ontology(pm_name, Relations.POB, pm_pob)
+        insert_into_ontology(pm_name, Relations.DOB, pm_dob)
 
-            a2 = doc2.xpath("//table[contains(@class, 'infobox')]")
-            m2 = a2[0].xpath("//table//th[text()='Born']")
-            pob = m2[0].xpath("./../td//a[position()=last()]/text()")
-            print("President was born in " + pob[0])
+        country_population = get_population_data(infobox)
+        insert_into_ontology(country_population, Relations.POPULATION, country)
 
-        except Exception:
-            print("Fail in President or president place of birth")
+        country_area = get_geographic_data(infobox)
+        insert_into_ontology(country_area, Relations.AREA, country)
 
-        try:
-            b = infobox.xpath("//table//a[text()='Prime Minister']")
-            prime_minister = b[0].xpath("./../../../td/a")
-            print("Prime Minister: " + prime_minister[0].text)
+        political_data = get_political_data(infobox)
+        insert_into_ontology(political_data, Relations.POLITICAL_STATUS, country)
 
-            res2 = requests.get(PREFIX + prime_minister[0].attrib["href"])
-            doc2 = lxml.html.fromstring(res2.content)
-
-            a2 = doc2.xpath("//table[contains(@class, 'infobox')]")
-            m2 = a2[0].xpath("//table//th[text()='Born']")
-            pob = m2[0].xpath("./../td//a[position()=last()]/text()")
-            print("Prime Minister was born in " + pob[0])
-        except Exception:
-            print("Fail in Prime Minister or prime minister place of birth")
-
-        try:
-            c = infobox.xpath("//table//a[text()='Population']")
-
-            if c:
-                population = c[0].xpath("./../../following-sibling::tr[1]/td/text()")[0]
-            else:
-                c = infobox[0].xpath("//table//th[text()='Population']")
-                population = c[0].xpath("./../following-sibling::tr[1]/td/text()")[0]
-
-            if len(population) < 3:  # russia special case
-                population = c[0].xpath("./../../following-sibling::tr[1]/td/div/ul/li[1]/text()")[0]
-
-            print("Population: " + population.strip())
-        except Exception:
-            print("Fail in Population")
-
-        try:
-            d = infobox.xpath("//table//a[text()='Area ' or text()='Area']")
-
-            if d:
-                area = d[0].xpath("./../../following-sibling::tr[1]/td/text()")[0]
-            else:
-                d = infobox[0].xpath("//table//th[text()='Area ' or text()='Area']")
-                area = d[0].xpath("./../following-sibling::tr[1]/td/text()")[0]
-
-            print("Area: " + area)
-        except Exception:
-            print("Fail in Area")
-
-        try:
-            e = infobox.xpath("//table//a[text()='Government']")
-            if e:
-                government_form = e[0].xpath("./../../td//a/@title")
-            else:
-                e = infobox[0].xpath("//table//th[text()='Government']")
-                government_form = e[0].xpath("./../td//a/@title")
-
-            government_form.sort()
-            s = ""
-            for g in government_form:
-                s = s + g + ", "
-            print("Government form: "+s[:-2])
-        except Exception:
-            print("Fail in Government Form")
-
-        try:
-            capital = infobox.xpath(".//th[contains(text(), 'Capital') and @class = 'infobox-label']/../td/a/text()")
-            if not len(capital):
-                capital = infobox.xpath(
-                    ".//th[contains(text(), 'Capital') and @class = 'infobox-label']/../td/text()")
-            capital = capital[0]
-            print("Capital: " + capital)
-        except Exception:
-            print(countries[i])
-            kk += 1
-            print("Fail in Capital")
-
-        print("***************")
-
-    print("Done")
-    print(kk)
-
-
-def main():
-    url = PREFIX + "/wiki/List_of_countries_by_population_(United_Nations)"
-
-    get_countries(url)
+        capital_city = get_capital_city_data(infobox)
+        insert_into_ontology(capital_city, Relations.CAPITAL_OF, country)
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)
