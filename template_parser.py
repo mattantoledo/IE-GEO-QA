@@ -80,7 +80,7 @@ def parse_q13_template(nl_query: str) -> (str, Relations, str):  # TODO: Is this
 
 def parse_q14_template(nl_query: str) -> (str, Relations, str):  # TODO: is this ok? or do we need PMs as well
     substring_idx = len("How many presidents were born in ")
-    e2 = nl_query[substring_idx:]
+    e2 = nl_query[substring_idx:-1]
     return Relations.PRESIDENT_OF, Relations.POB, e2
 
 

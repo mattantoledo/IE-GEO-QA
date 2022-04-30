@@ -37,7 +37,8 @@ def get_links(xml_doc):
     l4 = xml_doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1]/i/a[1]/@href")
     return l1 + l2 + l3 + l4
 
-
+# TODO fix it to return only countries in the list
+# TODO fix problem of sometimes returning city
 def get_place_of_birth(xml_doc) -> string:
 
     infobox = xml_doc.xpath("//table[contains(@class, 'infobox')]")
@@ -186,7 +187,7 @@ def get_capital_city_data(infobox) -> string:
 
 
 def add_ontology_prefix(item: string):
-    return (f"{ONTOLOGY_PREFIX}{item}")
+    return f"{ONTOLOGY_PREFIX}{item}"
 
 
 def insert_underscores(item: string):
@@ -203,7 +204,7 @@ def insert_into_ontology(e1, relation_property, e2):
     e2 = add_ontology_prefix(insert_underscores(e2))
     G.add((rdflib.URIRef(e1), rdflib.URIRef(relation_property), rdflib.URIRef(e2)))
 
-
+# TODO do not insert None into ontology
 def get_data(url):
     res = requests.get(url)
     doc = lxml.html.fromstring(res.content)
@@ -212,8 +213,8 @@ def get_data(url):
     links = get_links(doc)
 
     start = 0
-    end = 30
-    # g.parse('graph.nt', 'nt')
+    end = len(countries)
+
     for i in range(start, end):
         country = countries[i]
         print(str(i) + " Name: " + country)

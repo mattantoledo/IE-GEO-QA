@@ -11,7 +11,8 @@ def get_entity_of_relation_query(nl_query: str, parser: Callable[[str], Tuple[Re
     What is the population of <country>?, Who is the prime minister of <country>?, Who is the president of <country>?"""
     r1, e1 = parser(nl_query)
     if e1 is not None and r1 is not None:
-        sparql_query = "SELECT * WHERE { ?e <" + add_ontology_prefix(r1.value) + "> <" + add_ontology_prefix(insert_underscores(e1)) + "> . }"
+        sparql_query = "PREFIX foo:<" + ONTOLOGY_PREFIX + ">" \
+                       "SELECT ?data WHERE { ?data foo:" + r1.value + " foo:" + insert_underscores(e1) + " . }"
         return r1, e1, sparql_query
     else:
         raise Exception
@@ -20,56 +21,90 @@ def get_entity_of_relation_query(nl_query: str, parser: Callable[[str], Tuple[Re
 def get_elements_in_relation_count_query(nl_query: str, parser: Callable[[str], Tuple[Relations, Relations, str]]) -> (str, Relations, str, str):
     """
     DONE!
-    How many presidents/ prime ministers were born in <country>?
+    How many presidents were born in <country>?
     """
     r1, r2, e2 = parser(nl_query)
     if r1 is not None and r2 is not None and e2 is not None:
-        sparql_query = "SELECT (COUNT(?person) AS ?count) WHERE {?person <" + add_ontology_prefix(
-            r1.value) + "> ?country . ?person <" + add_ontology_prefix(r2.value) + "> <" + add_ontology_prefix(
-            e2) + "> . }"
+        sparql_query = "PREFIX foo:<" + ONTOLOGY_PREFIX + ">" \
+                       "SELECT (COUNT(?person) AS ?count) " \
+                       "WHERE { ?person foo:" + r1.value + " ?country ." \
+                              " ?person foo:" + r2.value + " foo:" + e2 + " . }"
         return r1, r2, e2, sparql_query
     else:
         raise Exception
 
 
-#TODO: this...
+#TODO: change ontologies so that each form is by itself (not a list)
 def get_elements_intersection_count_query(nl_query: str,
                                           parser: Callable[[str], Tuple[str, str]]) -> str:
     """How many <government_form1> are also <government_form2>"""
     e1, e2 = parser(nl_query)
+
+    form1 = add_ontology_prefix(insert_underscores(e1))
+    form2 = add_ontology_prefix(insert_underscores(e2))
+    rel = add_ontology_prefix(Relations.POLITICAL_STATUS.value)
+
     if e1 is not None and e2 is not None:
-        return e1, e2, ""
+
+        sparql_query = ""
+
+        return e1, e2, sparql_query
     else:
         raise Exception
 
-#TODO: this..
+
 def get_entity_query(nl_query: str, parser: Callable[[str], str]) -> (str, str):
     """Who is <entity>?"""
+
     e1 = parser(nl_query)
+
+    person = insert_underscores(e1)
+    pr_of = Relations.PRESIDENT_OF.value
+    pm_of = Relations.PM_OF.value
+
     if e1 is not None:
-        sparql_query = "SELECT ?pms ?presidents WHERE { ?pms <" + add_ontology_prefix(
-            Relations.PM_OF.value) + "> ?y . ?presidents <" + add_ontology_prefix(Relations.PRESIDENT_OF.value) + "> ?z   }"
+        sparql_query = "PREFIX foo:<" + ONTOLOGY_PREFIX + ">" \
+                       "SELECT ?rel ?country " \
+                       "WHERE {" \
+                       "foo:" + person + " ?rel ?country ." \
+                       " FILTER( ?rel = foo:" + pm_of + " || ?rel = foo:"+pr_of+")" \
+                        " }"
+
         return e1, sparql_query
     else:
         raise Exception
 
-#TODO: this...
+
 def get_special_substring_query(nl_query: str, parser: Callable[[str], Tuple[str, Relations, str]]) -> (str, Relations, str):
     """List all countries whose capital name contains the string <str>"""
+
     e1, r1, substring = parser(nl_query)
     if e1 is not None:
-        sparql_query = "SELECT * WHERE { ?e <" + add_ontology_prefix(r1.value) + "> <" + add_ontology_prefix(
-            insert_underscores(e1)) + "> . }"
+
+        sparql_query = "PREFIX foo:<" + ONTOLOGY_PREFIX + ">" \
+                       "SELECT ?country " \
+                       "WHERE {" \
+                       "?city foo:" + r1.value + " ?country ." \
+                       " FILTER( CONTAINS(str(?city), '" + substring + "'))" \
+                        " }"
+
         return e1, r1, substring, sparql_query
     else:
         raise Exception
 
-#TODO: this...
+
 def get_entity_of_2_relations(nl_query, parser: Callable[[str], Tuple[Relations, str, Relations]]) -> str:
     """When was the president of <country> born?, where was the prime minister of <country> born?"""
     r1, e1, r2 = parser(nl_query)
+
+    country = insert_underscores(e1)
     if r1 is not None and e1 is not None and r2 is not None:
-        return r1, e1, r2, ""
+
+        sparql_query = "PREFIX foo: <" + ONTOLOGY_PREFIX + ">" \
+                       "SELECT ?data WHERE { ?person foo:" + r1.value + " foo:" + country + " ." \
+                       "?person foo:" + r2.value + "  ?data}"
+
+        return r1, e1, r2, sparql_query
     else:
         raise Exception
 
@@ -121,17 +156,12 @@ def main():
     assert list(g.query(sparql_query))[0][0].value == 1
     r1, r2, e3, sparql_query = parse_nl_query_to_structured_query("How many presidents were born in Iceland")
     assert e3 == 'Iceland'
-    print("Presidents born at: " + list(g.query(sparql_query))[0][0].value)
-
     r, e, sparql_query = parse_nl_query_to_structured_query("Who is the prime minister of Vietnam?")
     assert r == Relations.PM_OF and e == "Vietnam"
-    print(list(g.query(sparql_query))[0][0])
     r, e, sparql_query = parse_nl_query_to_structured_query("What is the population of China?")
     assert r == Relations.POPULATION and e == "China"
-    print(list(g.query(sparql_query))[0][0])
     r, e, sparql_query = parse_nl_query_to_structured_query("What is the form of government in China?")
     assert r == Relations.POLITICAL_STATUS and e == "China"
-    print(list(g.query(sparql_query))[0][0])
     r1, e1, r2, sparql_query = parse_nl_query_to_structured_query("When was the president of Vietnam born?")
     assert r1 == Relations.PRESIDENT_OF and e1 == "Vietnam" and r2 == Relations.DOB
     r1, e1, r2, sparql_query = parse_nl_query_to_structured_query("Where was the prime minister of China born?")
@@ -144,6 +174,67 @@ def main():
     # print(list(g.query(sparql_query)))
     # print(len(list(g.query(sparql_query))))
 
+def print_num_result(g, sparql_query):
+    results = list(g.query(sparql_query))
+    if results:
+        answer = results[0][0]
+        print(answer)
+    else:
+        print("not found")
+
+def print_result(g, sparql_query):
+    results = list(g.query(sparql_query))
+    if results:
+        tup = results[0]
+        for a in tup:
+            b = a[len(ONTOLOGY_PREFIX):].replace('_', ' ')
+            print(b)
+    else:
+        print("not found")
+
+
+def test():
+    g = rdflib.Graph()
+    g.parse('graph.nt', 'nt')
+
+    country = "Iraq"
+    person = "Joe Biden"
+
+    sparql_query = parse_nl_query_to_structured_query(f"Who is the president of {country}?")[-1]
+    print_result(g, sparql_query)
+
+    sparql_query = parse_nl_query_to_structured_query(f"Who is the prime minister of {country}?")[-1]
+    print_result(g, sparql_query)
+
+    sparql_query = parse_nl_query_to_structured_query(f"What is the population of {country}?")[-1]
+    print_result(g, sparql_query)
+
+    sparql_query = parse_nl_query_to_structured_query(f"What is the area of {country}?")[-1]
+    print_result(g, sparql_query)
+
+    sparql_query = parse_nl_query_to_structured_query(f"What is the form of government of {country}?")[-1]
+    print_result(g, sparql_query)
+
+    sparql_query = parse_nl_query_to_structured_query(f"What is the capital of {country}?")[-1]
+    print_result(g, sparql_query)
+
+    sparql_query = parse_nl_query_to_structured_query(f"How many presidents were born in {country}?")[-1]
+    print_num_result(g, sparql_query)
+
+    sparql_query = parse_nl_query_to_structured_query(f"Who is {person}?")[-1]
+    print_result(g, sparql_query)
+
+    sparql_query = parse_nl_query_to_structured_query("When was the president of United States born?")[-1]
+    print_result(g, sparql_query)
+
+    sparql_query = parse_nl_query_to_structured_query("List all countries whose capital name contains the string hi")[-1]
+    print_result(g, sparql_query)
+
+
+
+
+
 
 if __name__ == "__main__":
-    main()
+    #main()
+    test()
