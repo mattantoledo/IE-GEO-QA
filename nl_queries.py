@@ -3,6 +3,9 @@ from typing import List, Callable, Tuple
 from main import *
 from template_parser import *
 
+PREFIX = "https://en.wikipedia.org/wiki/"
+RELATION_PREFIX = "http://example.org/"
+
 
 def get_entity_of_relation_query(nl_query: str, parser: Callable[[str], Tuple[Relations, str]]) -> (
         Relations, str, str):
@@ -10,43 +13,57 @@ def get_entity_of_relation_query(nl_query: str, parser: Callable[[str], Tuple[Re
     DONE!
     What is the population of <country>?, Who is the prime minister of <country>?, Who is the president of <country>?"""
     r1, e1 = parser(nl_query)
+
+    # TODO maybe need to do this for all queries
+    # special case for Saint Helena, Ascension and Tristan da Cunha
+    if ',' in e1:
+        sparql_query = "PREFIX rel:<" + RELATION_PREFIX + "> " \
+                        "SELECT ?data WHERE { <" + PREFIX + insert_underscores(e1) + "> rel:" + r1.value + " ?data . }"
+        return r1, e1, sparql_query
+
     if e1 is not None and r1 is not None:
-        sparql_query = "PREFIX foo:<" + ONTOLOGY_PREFIX + ">" \
-                       "SELECT ?data WHERE { ?data foo:" + r1.value + " foo:" + insert_underscores(e1) + " . }"
+        sparql_query = "PREFIX ent:<" + PREFIX + "> " \
+                        "PREFIX rel:<" + RELATION_PREFIX + "> " \
+                        "SELECT ?data WHERE { ent:" + insert_underscores(e1) + " rel:" + r1.value + " ?data . }"
         return r1, e1, sparql_query
     else:
         raise Exception
 
 
-def get_elements_in_relation_count_query(nl_query: str, parser: Callable[[str], Tuple[Relations, Relations, str]]) -> (str, Relations, str, str):
+def get_elements_in_relation_count_query(nl_query: str, parser: Callable[[str], Tuple[Relations, Relations, str]]) -> (
+str, Relations, str, str):
     """
     DONE!
     How many presidents were born in <country>?
     """
     r1, r2, e2 = parser(nl_query)
     if r1 is not None and r2 is not None and e2 is not None:
-        sparql_query = "PREFIX foo:<" + ONTOLOGY_PREFIX + ">" \
-                       "SELECT (COUNT(?person) AS ?count) " \
-                       "WHERE { ?person foo:" + r1.value + " ?country ." \
-                              " ?person foo:" + r2.value + " foo:" + e2 + " . }"
+        sparql_query = "PREFIX ent: <" + PREFIX + ">" \
+                        "PREFIX rel:<" + RELATION_PREFIX + "> " \
+                        "SELECT (COUNT(?person) AS ?num) " \
+                        "WHERE { ?country rel:" + r1.value + " ?person ." \
+                                " ?person rel:" + r2.value + " ent:" + insert_underscores(e2) + " }"
         return r1, r2, e2, sparql_query
     else:
         raise Exception
 
 
-#TODO: change ontologies so that each form is by itself (not a list)
+# TODO: change ontologies so that each form is by itself (not a list)
 def get_elements_intersection_count_query(nl_query: str,
                                           parser: Callable[[str], Tuple[str, str]]) -> str:
     """How many <government_form1> are also <government_form2>"""
     e1, e2 = parser(nl_query)
 
-    form1 = add_ontology_prefix(insert_underscores(e1))
-    form2 = add_ontology_prefix(insert_underscores(e2))
-    rel = add_ontology_prefix(Relations.POLITICAL_STATUS.value)
+    form1 = insert_underscores(e1)
+    form2 = insert_underscores(e2)
+    r = Relations.POLITICAL_STATUS.value
 
     if e1 is not None and e2 is not None:
 
-        sparql_query = ""
+        sparql_query = "PREFIX ent: <" + PREFIX + ">" \
+                        "PREFIX rel:<" + RELATION_PREFIX + "> " \
+                        "SELECT (COUNT(?country) AS ?num) WHERE { ?country rel:"+r+" ent:"+form1+" . " \
+                        "?country rel:"+r+" ent:"+form2+" }"
 
         return e1, e2, sparql_query
     else:
@@ -63,30 +80,34 @@ def get_entity_query(nl_query: str, parser: Callable[[str], str]) -> (str, str):
     pm_of = Relations.PM_OF.value
 
     if e1 is not None:
-        sparql_query = "PREFIX foo:<" + ONTOLOGY_PREFIX + ">" \
-                       "SELECT ?rel ?country " \
-                       "WHERE {" \
-                       "foo:" + person + " ?rel ?country ." \
-                       " FILTER( ?rel = foo:" + pm_of + " || ?rel = foo:"+pr_of+")" \
-                        " }"
+        sparql_query = "PREFIX ent:<" + PREFIX + ">" \
+                        "PREFIX rel:<" + RELATION_PREFIX + "> " \
+                        "SELECT ?job ?country " \
+                        "WHERE {" \
+                            "?country ?job ent:" + person + " ." \
+                            " FILTER( ?job = rel:" + pm_of + " || ?job = rel:" + pr_of + ")" \
+                                " }"
 
         return e1, sparql_query
     else:
         raise Exception
 
 
-def get_special_substring_query(nl_query: str, parser: Callable[[str], Tuple[str, Relations, str]]) -> (str, Relations, str):
-    """List all countries whose capital name contains the string <str>"""
+def get_special_substring_query(nl_query: str, parser: Callable[[str], Tuple[str, Relations, str]]) -> (
+str, Relations, str):
+    """
+    List all countries whose capital name contains the string <str>
+    Case insensitive
+    """
 
     e1, r1, substring = parser(nl_query)
     if e1 is not None:
 
-        sparql_query = "PREFIX foo:<" + ONTOLOGY_PREFIX + ">" \
-                       "SELECT ?country " \
-                       "WHERE {" \
-                       "?city foo:" + r1.value + " ?country ." \
-                       " FILTER( CONTAINS(str(?city), '" + substring + "'))" \
-                        " }"
+        sparql_query = "PREFIX ent:<" + PREFIX + ">" \
+                        "PREFIX rel:<" + RELATION_PREFIX + "> " \
+                        "SELECT ?country " \
+                        "WHERE { ?country rel:" + r1.value + " ?city ." \
+                            " FILTER( CONTAINS(lcase(str(?city)), '" + substring + "')) }"
 
         return e1, r1, substring, sparql_query
     else:
@@ -100,9 +121,10 @@ def get_entity_of_2_relations(nl_query, parser: Callable[[str], Tuple[Relations,
     country = insert_underscores(e1)
     if r1 is not None and e1 is not None and r2 is not None:
 
-        sparql_query = "PREFIX foo: <" + ONTOLOGY_PREFIX + ">" \
-                       "SELECT ?data WHERE { ?person foo:" + r1.value + " foo:" + country + " ." \
-                       "?person foo:" + r2.value + "  ?data}"
+        sparql_query = "PREFIX ent: <" + PREFIX + ">" \
+                        "PREFIX rel:<" + RELATION_PREFIX + "> " \
+                        "SELECT ?data WHERE { ent:" + country + " rel:" + r1.value + " ?person . " \
+                        "?person rel:" + r2.value + "  ?data }"
 
         return r1, e1, r2, sparql_query
     else:
@@ -174,6 +196,7 @@ def main():
     # print(list(g.query(sparql_query)))
     # print(len(list(g.query(sparql_query))))
 
+
 def print_num_result(g, sparql_query):
     results = list(g.query(sparql_query))
     if results:
@@ -181,6 +204,7 @@ def print_num_result(g, sparql_query):
         print(answer)
     else:
         print("not found")
+
 
 def print_result(g, sparql_query):
     results = list(g.query(sparql_query))
@@ -227,14 +251,11 @@ def test():
     sparql_query = parse_nl_query_to_structured_query("When was the president of United States born?")[-1]
     print_result(g, sparql_query)
 
-    sparql_query = parse_nl_query_to_structured_query("List all countries whose capital name contains the string hi")[-1]
+    sparql_query = parse_nl_query_to_structured_query("List all countries whose capital name contains the string hi")[
+        -1]
     print_result(g, sparql_query)
 
 
-
-
-
-
 if __name__ == "__main__":
-    #main()
+    # main()
     test()
