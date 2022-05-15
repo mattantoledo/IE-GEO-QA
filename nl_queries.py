@@ -9,8 +9,7 @@ PREFIX = "https://en.wikipedia.org/wiki/"
 RELATION_PREFIX = "http://example.org/"
 
 
-def get_entity_of_relation_query(nl_query: str, parser: Callable[[str], Tuple[Relations, str]]) -> (
-        Relations, str, str):
+def get_entity_of_relation_query(nl_query: str, parser: Callable[[str], Tuple[Relations, str]]) -> str:
     """
     DONE!
     What is the population of <country>?, Who is the prime minister of <country>?, Who is the president of <country>?"""
@@ -29,13 +28,12 @@ def get_entity_of_relation_query(nl_query: str, parser: Callable[[str], Tuple[Re
                                                  "PREFIX rel:<" + RELATION_PREFIX + "> " \
                                                                                     "SELECT ?data WHERE { ent:" + insert_underscores(
             e1) + " rel:" + r1.value + " ?data . }"
-        return r1, e1, sparql_query
+        return sparql_query
     else:
         raise Exception
 
 
-def get_elements_in_relation_count_query(nl_query: str, parser: Callable[[str], Tuple[Relations, Relations, str]]) -> (
-        str, Relations, str, str):
+def get_elements_in_relation_count_query(nl_query: str, parser: Callable[[str], Tuple[Relations, Relations, str]]) -> str:
     """
     DONE!
     How many presidents were born in <country>?
@@ -48,7 +46,7 @@ def get_elements_in_relation_count_query(nl_query: str, parser: Callable[[str], 
                                                                                      "WHERE { ?country rel:" + r1.value + " ?person ." \
                                                                                                                           " ?person rel:" + r2.value + " ent:" + insert_underscores(
             e2) + " }"
-        return r1, r2, e2, sparql_query
+        return sparql_query
     else:
         raise Exception
 
@@ -70,12 +68,12 @@ def get_elements_intersection_count_query(nl_query: str,
                                                                                      "SELECT (COUNT(?country) AS ?num) WHERE { ?country rel:" + r + " ent:" + form1 + " . " \
                                                                                                                                                                       "?country rel:" + r + " ent:" + form2 + " }"
 
-        return e1, e2, sparql_query
+        return sparql_query
     else:
         raise Exception
 
 
-def get_entity_query(nl_query: str, parser: Callable[[str], str]) -> (str, str):
+def get_entity_query(nl_query: str, parser: Callable[[str], str]) -> str:
     """Who is <entity>?"""
 
     e1 = parser(nl_query)
@@ -93,13 +91,12 @@ def get_entity_query(nl_query: str, parser: Callable[[str], str]) -> (str, str):
                                                                                                                     " FILTER( ?job = rel:" + pm_of + " || ?job = rel:" + pr_of + ")" \
                                                                                                                                                                                  " }"
 
-        return e1, sparql_query
+        return sparql_query
     else:
         raise Exception
 
 
-def get_special_substring_query(nl_query: str, parser: Callable[[str], Tuple[str, Relations, str]]) -> (
-        str, Relations, str):
+def get_special_substring_query(nl_query: str, parser: Callable[[str], Tuple[str, Relations, str]]) -> str:
     """
     List all countries whose capital name contains the string <str>
     Case insensitive
@@ -114,7 +111,7 @@ def get_special_substring_query(nl_query: str, parser: Callable[[str], Tuple[str
                                                                                     "WHERE { ?country rel:" + r1.value + " ?city ." \
                                                                                                                          " FILTER( CONTAINS(lcase(str(?city)), '" + substring + "')) }"
 
-        return e1, r1, substring, sparql_query
+        return sparql_query
     else:
         raise Exception
 
@@ -131,12 +128,12 @@ def get_entity_of_2_relations(nl_query, parser: Callable[[str], Tuple[Relations,
                                                                                      "SELECT ?data WHERE { ent:" + country + " rel:" + r1.value + " ?person . " \
                                                                                                                                                   "?person rel:" + r2.value + "  ?data }"
 
-        return r1, e1, r2, sparql_query
+        return sparql_query
     else:
         raise Exception
 
 
-def get_custom_query(nl_query, parser: Callable[[str], Tuple[Relations, str]]) -> (Relations, str, str):
+def get_custom_query(nl_query, parser: Callable[[str], Tuple[Relations, str]]) -> str:
     r, dob_string = parser(nl_query)
 
     sparql_query = "PREFIX ent:<" + PREFIX + ">" \
@@ -144,7 +141,7 @@ def get_custom_query(nl_query, parser: Callable[[str], Tuple[Relations, str]]) -
                                                                                 "SELECT ?person " \
                                                                                 "WHERE { ?person rel:" + r.value + " ?dob ." \
                                                                                                                    " FILTER( CONTAINS(lcase(str(?dob)), '" + dob_string + "')) }"
-    return r, dob_string, sparql_query
+    return sparql_query
 
 
 def parse_nl_query_to_structured_query(nl_query: str) -> List[str] or str:
@@ -180,38 +177,6 @@ def parse_nl_query_to_structured_query(nl_query: str) -> List[str] or str:
 
     else:
         return "ERROR"
-
-
-def main():
-    g = rdflib.Graph()
-    g.parse('graph.nt', 'nt')
-    e1, e2, sparql_query = parse_nl_query_to_structured_query("How many Dogs are also Cats?")
-    assert e1 == 'Dogs' and e2 == 'Cats'
-    e1, e2, e3, sparql_query = parse_nl_query_to_structured_query(
-        "List all countries whose capital name contains the string hi")
-    assert e3 == 'hi'
-    r1, r2, e3, sparql_query = parse_nl_query_to_structured_query("How many presidents were born in Brazil")
-    assert e3 == 'Brazil'
-    assert list(g.query(sparql_query))[0][0].value == 1
-    r1, r2, e3, sparql_query = parse_nl_query_to_structured_query("How many presidents were born in Iceland")
-    assert e3 == 'Iceland'
-    r, e, sparql_query = parse_nl_query_to_structured_query("Who is the prime minister of Vietnam?")
-    assert r == Relations.PM_OF and e == "Vietnam"
-    r, e, sparql_query = parse_nl_query_to_structured_query("What is the population of China?")
-    assert r == Relations.POPULATION and e == "China"
-    r, e, sparql_query = parse_nl_query_to_structured_query("What is the form of government in China?")
-    assert r == Relations.POLITICAL_STATUS and e == "China"
-    r1, e1, r2, sparql_query = parse_nl_query_to_structured_query("When was the president of Vietnam born?")
-    assert r1 == Relations.PRESIDENT_OF and e1 == "Vietnam" and r2 == Relations.DOB
-    r1, e1, r2, sparql_query = parse_nl_query_to_structured_query("Where was the prime minister of China born?")
-    assert r1 == Relations.PM_OF and e1 == "China" and r2 == Relations.POB
-    r1, e1, r2, sparql_query = parse_nl_query_to_structured_query("Where was the prime minister of China born?")
-    assert r1 == Relations.PM_OF and e1 == "China" and r2 == Relations.POB
-    e1, sparql_query = parse_nl_query_to_structured_query("Who is Phạm Minh Chính?")
-    assert e1 == "Phạm Minh Chính"
-    # print(sparql_query)
-    # print(list(g.query(sparql_query)))
-    # print(len(list(g.query(sparql_query))))
 
 
 def print_num_result(g, sparql_query):
