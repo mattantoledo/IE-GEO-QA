@@ -64,7 +64,7 @@ def main(argv):
                 elif 'president' in a:
                     a = 'President of '
                 elif 'prime' in a:
-                    a = 'Prime minister of '
+                    a = 'Prime Minister of '
 
                 elif type(a) is URIRef:
                     a = a[len(p):].replace('_', ' ')
