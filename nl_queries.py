@@ -1,9 +1,7 @@
 from typing import List, Callable, Tuple
 
-import rdflib as rdflib
-
-from main import *
 from template_parser import *
+from geo_qa import insert_underscores
 
 PREFIX = "https://en.wikipedia.org/wiki/"
 RELATION_PREFIX = "http://example.org/"
@@ -21,7 +19,7 @@ def get_entity_of_relation_query(nl_query: str, parser: Callable[[str], Tuple[Re
         sparql_query = "PREFIX rel:<" + RELATION_PREFIX + "> " \
                                                           "SELECT ?data WHERE { <" + PREFIX + insert_underscores(
             e1) + "> rel:" + r1.value + " ?data . }"
-        return r1, e1, sparql_query
+        return sparql_query
 
     if e1 is not None and r1 is not None:
         sparql_query = "PREFIX ent:<" + PREFIX + "> " \
@@ -177,79 +175,3 @@ def parse_nl_query_to_structured_query(nl_query: str) -> List[str] or str:
 
     else:
         return "ERROR"
-
-
-def print_num_result(g, sparql_query):
-    results = list(g.query(sparql_query))
-    if results:
-        answer = results[0][0]
-        print(answer)
-    else:
-        print("not found")
-
-
-def print_result(g, sparql_query):
-    results = list(g.query(sparql_query))
-    if results:
-        tup = results[0]
-        for a in tup:
-            b = a[len(ONTOLOGY_PREFIX):].replace('_', ' ')
-            print(b)
-    else:
-        print("not found")
-
-
-def ofek_test():
-    g = rdflib.Graph()
-    g.parse('ontology.nt', 'nt')
-    _, _, sparql_query = parse_nl_query_to_structured_query("Who is the president of Vietnam?")
-    res = g.query(sparql_query)
-    print_result(g, sparql_query)
-    _, _, sparql_query = parse_nl_query_to_structured_query(f"Who was born on the 1954-07-20?")
-    res = g.query(sparql_query)
-    print_result(g, sparql_query)
-
-
-def test():
-    g = rdflib.Graph()
-    g.parse('graph.nt', 'nt')
-
-    country = "Argentina"
-    person = "Joe Biden"
-
-    sparql_query = parse_nl_query_to_structured_query(f"Who is the president of {country}?")[-1]
-    print_result(g, sparql_query)
-
-    sparql_query = parse_nl_query_to_structured_query(f"Who is the prime minister of {country}?")[-1]
-    print_result(g, sparql_query)
-
-    sparql_query = parse_nl_query_to_structured_query(f"What is the population of {country}?")[-1]
-    print_result(g, sparql_query)
-
-    sparql_query = parse_nl_query_to_structured_query(f"What is the area of {country}?")[-1]
-    print_result(g, sparql_query)
-
-    sparql_query = parse_nl_query_to_structured_query(f"What is the form of government of {country}?")[-1]
-    print_result(g, sparql_query)
-
-    sparql_query = parse_nl_query_to_structured_query(f"What is the capital of {country}?")[-1]
-    print_result(g, sparql_query)
-
-    sparql_query = parse_nl_query_to_structured_query(f"How many presidents were born in {country}?")[-1]
-    print_num_result(g, sparql_query)
-
-    sparql_query = parse_nl_query_to_structured_query(f"Who is {person}?")[-1]
-    print_result(g, sparql_query)
-
-    sparql_query = parse_nl_query_to_structured_query("When was the president of United States born?")[-1]
-    print_result(g, sparql_query)
-
-    sparql_query = parse_nl_query_to_structured_query("List all countries whose capital name contains the string hi")[
-        -1]
-    print_result(g, sparql_query)
-
-
-if __name__ == "__main__":
-    # main()
-    # test()
-    ofek_test()

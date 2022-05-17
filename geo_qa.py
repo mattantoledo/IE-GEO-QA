@@ -1,16 +1,30 @@
+import lxml.html
+import requests
+import string
 import sys
 import urllib.parse
+from enum import Enum
 
-import lxml.html
-
-from nl_queries import *
 from rdflib import Literal, XSD, URIRef, Graph
 
+import nl_queries
+
 PREFIX = "https://en.wikipedia.org"
-ONTOLOGY_PREFIX = "http://example.org/"
+RELATION_PREFIX = "http://example.org/"
 COUNTRIES_PATH = "/wiki/List_of_countries_by_population_(United_Nations)"
 
 G = Graph()
+
+
+class Relations(Enum):
+    PRESIDENT_OF = "president_of"
+    PM_OF = "prime_minister_of"
+    DOB = "born_on"
+    POB = "born_at"
+    AREA = "area_of"
+    POPULATION = "population_of"
+    CAPITAL_OF = "capital_of"
+    POLITICAL_STATUS = "political_status"
 
 
 def main(argv):
@@ -21,10 +35,6 @@ def main(argv):
 
     if argv[1] == 'create':
         build_ontology(PREFIX + COUNTRIES_PATH)
-        # this is used to print all the graph
-        #import pprint
-        #for stmt in G:
-        #    pprint.pprint(stmt)
         G.serialize("ontology.nt", format='nt', encoding='utf-8', errors='ignore')
 
         print('Finished building')
@@ -33,7 +43,7 @@ def main(argv):
     elif argv[1] == 'question':
 
         G.parse(source="ontology.nt", format='nt')
-        sparql_query = parse_nl_query_to_structured_query(argv[2])[-1]
+        sparql_query = nl_queries.parse_nl_query_to_structured_query(argv[2])
         results = list(G.query(sparql_query))
         if results:
 
@@ -81,7 +91,7 @@ def main(argv):
 # is_term is True if e2 is number/date (population, area, date of birth)
 def insert_into_ontology(e1, relation_property, e2, is_term=False):
 
-    relation_property = ONTOLOGY_PREFIX + relation_property.value
+    relation_property = RELATION_PREFIX + relation_property.value
 
     if is_term:
         ent2 = e2
@@ -259,6 +269,10 @@ def get_date_of_birth(person) -> string:
     return None
 
 
+def insert_underscores(item: string):
+    return item.replace(" ", "_")
+
+
 def build_ontology(url):
     res = requests.get(url)
     doc = lxml.html.fromstring(res.content)
@@ -323,5 +337,4 @@ def build_ontology(url):
 
 
 if __name__ == "__main__":
-
     main(sys.argv)

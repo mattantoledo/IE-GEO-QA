@@ -1,6 +1,6 @@
 from enum import Enum
 
-from main import Relations
+from geo_qa import Relations
 
 
 # TODO: Is the Ok?
@@ -93,30 +93,3 @@ def parse_q14_template(nl_query: str) -> (str, Relations, str):  # TODO: is this
     e2 = nl_query[substring_idx:-1]
     return Relations.PRESIDENT_OF, Relations.POB, e2
 
-
-def main():
-    e1, e2 = parse_q12_template("How many Dogs are also Cats?")
-    assert e1 == 'Dogs' and e2 == 'Cats'
-    e1, e2, e3 = parse_q13_template("List all countries whose capital name contains the string hi")
-    assert e3 == 'hi'
-    e1, e2, e3 = parse_q14_template("How many presidents were born in Colorado")
-    assert e3 == 'Colorado'
-    r, e = parse_who_is_the_template("Who is the prime minister of Vietnam?")
-    assert r == Relations.PM_OF and e == "Vietnam"
-    r, e = parse_what_is_the_template("What is the population of China?")
-    assert r == Relations.POPULATION and e == "China"
-    r, e = parse_what_is_the_template("What is the population of China?")
-    assert r == Relations.POPULATION and e == "China"
-    r, e = parse_what_is_the_form_template("What is the form of government in China?")
-    assert r == Relations.POLITICAL_STATUS and e == "China"
-    r, e = parse_what_is_the_form_template("What is the form of government in China?")
-    assert r == Relations.POLITICAL_STATUS and e == "China"
-    r1, e1, r2 = parse_when_was_the_template("When was the president of Vietnam born?")
-    assert r1 == Relations.PRESIDENT_OF and e1 == "Vietnam" and r2 == Relations.DOB
-    r1, e1, r2 = parse_where_was_the_template("Where was the prime minister of China born?")
-    assert r1 == Relations.PM_OF and e1 == "China" and r2 == Relations.POB
-    r, e = parse_who_was_born_on_template("Who was born on the 05-02-1990?")
-    assert r == Relations.DOB and e == "05-02-1990"
-
-if __name__ == "__main__":
-    main()
