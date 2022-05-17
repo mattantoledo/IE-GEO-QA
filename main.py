@@ -35,8 +35,6 @@ def get_countries(xml_doc):
 
     return countries, links
 
-    countries = [a.attrib["title"] for a in a_list]
-    links = [a.attrib["href"] for a in a_list]
 
 def get_place_of_birth(xml_doc) -> string:
 

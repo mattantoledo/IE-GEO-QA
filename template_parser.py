@@ -22,12 +22,22 @@ class TextStructure(Enum):
 
     WHERE_WAS_THE = "Where was the "  # Questions 8,10
 
+    BORN_ON = "born on the"  # Custom Question
+
 
 def parse_who_is_the_template(nl_query: str) -> (Relations, str):
     cleaned_nl_query = nl_query.replace(" ", "_")
     for r in Relations:
         if cleaned_nl_query.find(r.value) != -1:
             return r, cleaned_nl_query[len("Who is the ") + len(r.value) + 1:-1]
+    return None, None
+
+
+def parse_who_was_born_on_template(nl_query: str) -> (Relations, str):
+    cleaned_nl_query = nl_query.replace(" ", "_")
+    for r in Relations:
+        if cleaned_nl_query.find(r.value) != -1:
+            return r.DOB, cleaned_nl_query[len("Who was ") + len(TextStructure.BORN_ON.value) + 1:-1]
     return None, None
 
 
@@ -105,7 +115,8 @@ def main():
     assert r1 == Relations.PRESIDENT_OF and e1 == "Vietnam" and r2 == Relations.DOB
     r1, e1, r2 = parse_where_was_the_template("Where was the prime minister of China born?")
     assert r1 == Relations.PM_OF and e1 == "China" and r2 == Relations.POB
-
+    r, e = parse_who_was_born_on_template("Who was born on the 05-02-1990?")
+    assert r == Relations.DOB and e == "05-02-1990"
 
 if __name__ == "__main__":
     main()

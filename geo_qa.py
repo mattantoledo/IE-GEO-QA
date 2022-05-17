@@ -33,9 +33,6 @@ def main(argv):
     elif argv[1] == 'question':
 
         G.parse(source="ontology.nt", format='nt')
-
-        #question = "How many presidents were born in Iceland?"
-
         sparql_query = parse_nl_query_to_structured_query(argv[2])[-1]
         results = list(G.query(sparql_query))
         if results:
