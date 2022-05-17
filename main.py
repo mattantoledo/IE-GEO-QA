@@ -23,22 +23,21 @@ class Relations(Enum):
 
 def get_countries(xml_doc):
 
-    c1 = xml_doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][not(contains(text(), '('))]/span/a[1]/text()")
-    c2 = xml_doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][not(contains(text(), '('))]/a[1]/text()")
-    c3 = xml_doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][contains(text(), '(')]/span/a/text()")
-    c4 = xml_doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1]/i/a[1]/text()")
-    return c1 + c2 + c3 + c4
+    a1 = xml_doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][not(contains(text(), '('))]/span/a[1]")
+    a2 = xml_doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][not(contains(text(), '('))]/a[1]")
+    a3 = xml_doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][contains(text(), '(')]/span/a")
+    a4 = xml_doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1]/i/a[1]")
 
+    a_list = a1 + a2 + a3 + a4
 
-def get_links(xml_doc):
-    l1 = xml_doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][not(contains(text(), '('))]/span/a[1]/@href")
-    l2 = xml_doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][not(contains(text(), '('))]/a[1]/@href")
-    l3 = xml_doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1][contains(text(), '(')]/span/a/@href")
-    l4 = xml_doc.xpath("//table[contains(@class, 'wikitable')]/tbody/tr/td[1]/i/a[1]/@href")
-    return l1 + l2 + l3 + l4
+    countries = [a.attrib["title"] for a in a_list]
+    links = [a.attrib["href"] for a in a_list]
 
-# TODO fix it to return only countries in the list
-# TODO fix problem of sometimes returning city
+    return countries, links
+
+    countries = [a.attrib["title"] for a in a_list]
+    links = [a.attrib["href"] for a in a_list]
+
 def get_place_of_birth(xml_doc) -> string:
 
     infobox = xml_doc.xpath("//table[contains(@class, 'infobox')]")
@@ -202,15 +201,16 @@ def insert_into_ontology(e1, relation_property, e2):
     e1 = add_ontology_prefix(insert_underscores(e1))
     relation_property = add_ontology_prefix(relation_property.value)
     e2 = add_ontology_prefix(insert_underscores(e2))
-    G.add((rdflib.URIRef(e1), rdflib.URIRef(relation_property), rdflib.URIRef(e2)))
+    x = (rdflib.URIRef(e1), rdflib.URIRef(relation_property), rdflib.URIRef(e2))
+    print(x)
+    G.add(x)
 
-# TODO do not insert None into ontology
+
 def get_data(url):
     res = requests.get(url)
     doc = lxml.html.fromstring(res.content)
 
-    countries = get_countries(doc)
-    links = get_links(doc)
+    countries, links = get_countries(doc)
 
     start = 0
     end = len(countries)
@@ -218,6 +218,7 @@ def get_data(url):
     for i in range(start, end):
         country = countries[i]
         print(str(i) + " Name: " + country)
+        print(str(i) + " Link: " + PREFIX + links[i])
 
         res = requests.get(PREFIX + links[i])
         doc = lxml.html.fromstring(res.content)
@@ -247,7 +248,7 @@ def get_data(url):
         insert_into_ontology(capital_city, Relations.CAPITAL_OF, country)
 
         print("***************")
-    G.serialize('graph.nt', 'nt')
+    #G.serialize('graph.nt', 'nt')
     print("Done")
 
 
