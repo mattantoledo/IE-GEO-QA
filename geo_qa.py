@@ -127,16 +127,22 @@ def get_population(infobox) -> string:
 
     if pop_row:
         pop_row = pop_row[0]
-        population = pop_row.xpath(".//td//text()")
-        if population:
-            population = population[0]
-            if len(population) < 3:  # special case for russia case
-                population = pop_row.xpath(".//td//li/text()")
-                if population:
-                    population = population[0]
+        pop_list = pop_row.xpath(".//td//text()")
+        if pop_list:
+            population = pop_list[0]
 
-        population = population.split()[0]
-        return population
+            # special case for Dominican Republic
+            if population == ' ':
+                population = pop_list[1]
+
+            # special case for russia case
+            if len(population) < 3:
+                pop_list = pop_row.xpath(".//td//li/text()")
+                if pop_list:
+                    population = pop_list[0]
+
+            population = population.split()[0]
+            return population
     else:
         return None
 
@@ -146,6 +152,10 @@ def get_area(infobox) -> string:
     area = infobox.xpath(".//a[contains(text(), 'Area')]/../../following-sibling::tr[1]/td/text()")
     if not area:
         area = infobox.xpath(".//th[contains(text(), 'Area')]/../following-sibling::tr[1]/td/text()")
+
+    # special case for Channel Islands
+    if not area:
+        area = infobox.xpath(".//th[contains(text(), 'Area')]/following-sibling::td[1]/text()")
 
     if area:
         area = area[0].split()[0]
