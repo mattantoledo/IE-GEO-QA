@@ -127,12 +127,15 @@ def get_population(infobox) -> string:
 
     if pop_row:
         pop_row = pop_row[0]
-        population = pop_row.xpath(".//td//text()")[0]
-        if len(population) < 3: #special case for russia case
-            population = pop_row.xpath(".//td//li/text()")[0]
+        population = pop_row.xpath(".//td//text()")
+        if population:
+            population = population[0]
+            if len(population) < 3:  # special case for russia case
+                population = pop_row.xpath(".//td//li/text()")
+                if population:
+                    population = population[0]
 
         population = population.split()[0]
-
         return population
     else:
         return None
