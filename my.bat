@@ -1,10 +1,10 @@
 @ECHO OFF
 
 :: 37 excel questions:
-python geo_qa.py question "Who is the president of China?"
-python geo_qa.py question "Who is the president of Portugal?"
-python geo_qa.py question "Who is the president of Guam?"
-python geo_qa.py question "Who is the prime minister of Eswatini?"
+python geo_qa.py question "Who is the president of China? "
+python geo_qa.py question "Who is the president of  Portugal?"
+python geo_qa.py question "Who is the  president of Guam?"
+python geo_qa.py question "Who  is  the prime minister of Eswatini? "
 python geo_qa.py question "Who is the prime minister of Tonga?"
 python geo_qa.py question "What is the population of Isle of Man?"
 python geo_qa.py question "What is the population of Tokelau?"

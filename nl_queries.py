@@ -143,6 +143,9 @@ def get_custom_query(nl_query, parser: Callable[[str], Tuple[Relations, str]]) -
 
 
 def parse_nl_query_to_structured_query(nl_query: str) -> List[str] or str:
+
+    nl_query = ' '.join(nl_query.split())
+
     if nl_query.find(TextStructure.ARE_ALSO.value) != -1:
         return get_elements_intersection_count_query(nl_query, parse_q12_template)
 
