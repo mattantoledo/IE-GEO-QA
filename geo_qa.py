@@ -44,7 +44,12 @@ def main(argv):
 
         G.parse(source="ontology.nt", format='nt')
         sparql_query = nl_queries.parse_nl_query_to_structured_query(argv[2])
-        results = list(G.query(sparql_query))
+        try:
+            results = list(G.query(sparql_query))
+        except Exception as e:
+            print("Wrong arguments or query")
+            return
+        
         if results:
 
             results.sort()
