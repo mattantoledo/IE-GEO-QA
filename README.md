@@ -17,20 +17,20 @@ You can see the ontology itself in [ontology.nt](https://github.com/mattantoledo
 
 The ontology can be queried using SPARQL.
 In addition you can query the ontology by natural language, using the following question structures:
-1. Who is the president of *country*?
+1. Who is the **president** of *country*?
 2. Who is the prime minister of *country*?
-3. What is the population of +country+?
-4. What is the area of $country?
-5. What is the form of government of $country?
-6. What is the capital of $country?
-7. When was the president of $country born?
-8. Where was the president of $country born?
-9. When was the prime minister of $country born?
-10. Where was the prime minister of $country born?
+3. What is the population of *country*?
+4. What is the area of *country*?
+5. What is the form of government of *country*?
+6. What is the capital of *country*?
+7. When was the president of *country*?
+8. Where was the president of *country*?
+9. When was the prime minister of *country* born?
+10. Where was the prime minister of *country* born?
 11. Who is $entity?
 12. How many $government_form1 are also $government_form2?
 13. List all countries whose capital name contains the string $str
-14. How many presidents were born in $country?
+14. How many presidents were born in *country*?
 15. Who was born on $date?  
 
 <em>Note: $country may refer to any country in the world, $entity refers to a certain president or prime minister</em>
