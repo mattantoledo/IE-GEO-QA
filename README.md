@@ -17,8 +17,8 @@ You can see the ontology itself in [ontology.nt](https://github.com/mattantoledo
 
 The ontology can be queried using SPARQL.
 In addition you can query the ontology by natural language, using the following question structures:
-1. Who is the president of $country?
-2. Who is the prime minister of $country?
+1. Who is the president of *country*?
+2. Who is the prime minister of *country*?
 3. What is the population of $country?
 4. What is the area of $country?
 5. What is the form of government of $country?
