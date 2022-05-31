@@ -1,8 +1,0 @@
-
-sparql_query = 'SELECT ?x WHERE {?x <http://example.org/president_of> ?y . ?x <http://example.org/born_at>  <http://example.org/Brazil>  .}'
-list(g.query(sparql_query))
-[(rdflib.term.URIRef('http://example.org/Jair_Bolsonaro'),)]
-
-
-
-sparql_query = "SELECT ?pms ?presidents WHERE { ?pms <" + add_ontology_prefix(Relations.PM_OF.value) + "> ?y . FILTER (!(str(?pms)=\"http://example.org/None\") )}"
