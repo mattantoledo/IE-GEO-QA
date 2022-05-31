@@ -1,3 +1,6 @@
+```diff
++ text in green
+
 # Geographical Q&A
 
 In [geo_qa.py](https://github.com/mattantoledo/WebInformationExtractor/blob/main/geo_qa.py) I implemented a web crawler, that extracts information about all existing countries in the world from [Wikipedia](https://en.wikipedia.org/wiki/List_of_countries_by_population_(United_Nations)).
@@ -19,7 +22,7 @@ The ontology can be queried using SPARQL.
 In addition you can query the ontology by natural language, using the following question structures:
 1. Who is the president of *country*?
 2. Who is the prime minister of *country*?
-3. What is the population of $country?
+3. What is the population of +country+?
 4. What is the area of $country?
 5. What is the form of government of $country?
 6. What is the capital of $country?
