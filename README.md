@@ -1,6 +1,5 @@
 ```diff
-+ text in green
-```
+
 
 # Geographical Q&A
 
@@ -21,7 +20,7 @@ You can see the ontology itself in [ontology.nt](https://github.com/mattantoledo
 
 The ontology can be queried using SPARQL.
 In addition you can query the ontology by natural language, using the following question structures:
-1. Who is the president of *country*?
++ 1. Who is the president of *country*?
 2. Who is the prime minister of *country*?
 3. What is the population of +country+?
 4. What is the area of $country?
@@ -46,3 +45,6 @@ To create the ontology, run from the cmd line:<br>
 ```python geo_qa.py create ontology.nt```<br>
 To query an existing ontology, run:<br>
 ```python geo_qa.py question "your natural language question string"``` 
+
+
+```
