@@ -33,9 +33,15 @@ In addition you can query the ontology by natural language, using the following 
 14. How many presidents were born in *country*?
 15. Who was born on **date**?  
 
-<em>Note: $country may refer to any country in the world, $entity refers to a certain president or prime minister</em>
+### Code Structure
 
-[geo_ontology_queries.py](https://github.com/guryaniv/geo-q-a/blob/master/geo_ontology_queries.py) containes some SPARQL queries that answer specific questions about the ontology, [geo_queries_results.txt](https://github.com/guryaniv/geo-q-a/blob/master/geo_queries_results.txt) contains the answers.
+[geo_qa.py][1] is the main file for creating the ontology and querying it.
+[template_parser.py][2] extracts the entities and relations in the question, based on the 15 question templates from above.
+[nl_queries.py][3] parses the natural language question to a SPARQL query, using [template_parser.py][2]
+
+[1]: https://github.com/mattantoledo/WebInformationExtractor/blob/main/geo_qa.py
+[2]: https://github.com/mattantoledo/WebInformationExtractor/blob/main/template_parser.py
+[3]: https://github.com/mattantoledo/WebInformationExtractor/blob/main/nl_queries.py
 
 **Run Instructions**:<br>
 To create the ontology, run from the cmd line:<br>
