@@ -6,7 +6,6 @@ Using XPATH, we extract the following input from each country's wiki page:
 * Population
 * Capital
 * Area
-* Government 
 * President
 * Prime Minister
 * Form of Government
