@@ -1,4 +1,4 @@
-# Geographical Q&A
+## Geographical Q&A
 
 In [geo_qa.py](https://github.com/mattantoledo/WebInformationExtractor/blob/main/geo_qa.py) I implemented a web crawler, that extracts information about all existing countries in the world from [Wikipedia](https://en.wikipedia.org/wiki/List_of_countries_by_population_(United_Nations)).
 
@@ -43,7 +43,8 @@ In addition you can query the ontology by natural language, using the following 
 [2]: https://github.com/mattantoledo/WebInformationExtractor/blob/main/template_parser.py
 [3]: https://github.com/mattantoledo/WebInformationExtractor/blob/main/nl_queries.py
 
-**Run Instructions**:<br>
+### Run Instructions ###
+
 To create the ontology, run from the cmd line:<br>
 ```python geo_qa.py create```<br>
 To query an existing ontology, run:<br>
