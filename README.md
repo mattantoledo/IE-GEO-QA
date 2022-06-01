@@ -1,6 +1,6 @@
 ## Geographical Q&A
 
-In [geo_qa.py](https://github.com/mattantoledo/WebInformationExtractor/blob/main/geo_qa.py) I implemented a web crawler, that extracts information about all existing countries in the world from [Wikipedia](https://en.wikipedia.org/wiki/List_of_countries_by_population_(United_Nations)).
+We implemented a web crawler, that extracts information about all existing countries in the world from [Wikipedia](https://en.wikipedia.org/wiki/List_of_countries_by_population_(United_Nations)).
 
 Using XPATH, we extract the following input from each country's wiki page:
 * Population
