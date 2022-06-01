@@ -35,9 +35,9 @@ In addition you can query the ontology by natural language, using the following 
 
 ### Code Structure
 
-[geo_qa.py][1] is the main file for creating the ontology and querying it.
-[template_parser.py][2] extracts the entities and relations in the question, based on the 15 question templates from above.
-[nl_queries.py][3] parses the natural language question to a SPARQL query, using [template_parser.py][2]
+* [geo_qa.py][1] is the main file for creating the ontology and querying it.
+* [template_parser.py][2] extracts the entities and relations in the question, based on the 15 question templates from above.
+* [nl_queries.py][3] parses the natural language question to a SPARQL query, using [template_parser.py][2]
 
 [1]: https://github.com/mattantoledo/WebInformationExtractor/blob/main/geo_qa.py
 [2]: https://github.com/mattantoledo/WebInformationExtractor/blob/main/template_parser.py
